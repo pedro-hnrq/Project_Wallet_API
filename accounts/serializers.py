@@ -35,12 +35,19 @@ class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
-        style={'input_type': 'password'}
+        style={'input_type': 'password'},
+        min_length=8,  
+        max_length=12
     )
 
     class Meta:
         model = User
         fields = ['email', 'password', 'first_name', 'last_name']
+
+    def validate_password(self, value):
+        if len(value) < 8 or len(value) > 12:
+            raise serializers.ValidationError("A senha deve ter pelo menos 8 caracteres.")
+        return value
 
     def create(self, validated_data):
         # O método create_user já lida com a criptografia da senha

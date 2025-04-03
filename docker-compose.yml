@@ -1,0 +1,38 @@
+services:
+  db:
+    container_name: postgres-wallet
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: Dev1234@
+      POSTGRES_DB: wallet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - wallet
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: project-wallet
+    stdin_open: true
+    tty: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    command: tail -f /dev/null
+    depends_on:
+      - db
+    networks:
+      - wallet
+
+volumes:
+  pgdata:
+
+networks:
+  wallet:
