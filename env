@@ -1,0 +1,11 @@
+#CONFIG
+SECRET_KEY=django-insecure-p%)k*d4jjpap(%j)a2-c6futuc_rhi-cz1aedb(c#ru3m_g2tv
+DEBUG=True
+
+# DATABASE
+# Altere a variável `POSTGRES_HOST` de `localhost` para `db` para roda no docker.
+POSTGRES_NAME=wallet
+POSTGRES_USER=dev
+POSTGRES_PASSWORD=Dev1234@
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
