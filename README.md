@@ -16,6 +16,7 @@
 ### 📷 Prévia
 
 
+![image](https://github.com/user-attachments/assets/43c6ae1e-8ea0-4a45-ab2e-193c406a058b)
 
 
 
