@@ -36,7 +36,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True,
         style={'input_type': 'password'},
-        min_length=8,  
+        min_length=8,
         max_length=12
     )
 
