@@ -3,12 +3,20 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from accounts.models import User
 
 
+class UserSerializer(serializers.ModelSerializer):
+    img_profile = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name', 'img_profile']
+
+
 class LoginSerializer(TokenObtainPairSerializer):
+    # Adicione o serializer do usuário
+    user = UserSerializer(read_only=True)
+
     @classmethod
     def get_token(cls, user):
-        """
-        Gera o token JWT com informações adicionais.
-        """
         token = super().get_token(user)
         token['user_id'] = user.id
         return token
@@ -17,6 +25,12 @@ class LoginSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         token = self.get_token(self.user)
 
+        # Serialize o usuário com contexto de request para URLs absolutas
+        user_serializer = UserSerializer(
+            instance=self.user,
+            context={'request': self.context.get('request')}
+        )
+
         return {
             "access_token": data.pop('access'),
             "refresh_token": data.pop('refresh'),
@@ -24,10 +38,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             "expiration_at": token["exp"],
             "issued_at": token["iat"],
             "jti": token["jti"],
-            "user": {
-                'id': self.user.id,
-                'email': self.user.email
-            },
+            "user": user_serializer.data,
         }
 
 
@@ -42,7 +53,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name', 'last_name']
+        fields = ['email', 'password', 'first_name', 'last_name', 'img_profile']
 
     def validate_password(self, value):
         if len(value) < 8 or len(value) > 12:

@@ -43,7 +43,7 @@ class Command(BaseCommand):
                     'email': fake.unique.email(),
                     'password': 'senha123',
                     'first_name': fake.first_name(),
-                    'last_name': fake.last_name(),
+                    'last_name': fake.last_name()
                 }
                 user = User.objects.create_user(**user_data)
 
