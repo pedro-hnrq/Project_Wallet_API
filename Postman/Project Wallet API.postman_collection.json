@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "d8fccab0-74a6-47ce-8743-4838b5778580",
-		"name": "Wallet",
+		"name": "Project Wallet API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "39682783"
 	},

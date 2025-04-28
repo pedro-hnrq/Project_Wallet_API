@@ -22,7 +22,7 @@
 
 ### 🎯 Objetivo
 
-O objetivo deste projeto, desenvolvido em resposta ao desafio proposto, foi demonstrar proficiência em desenvolvimento backend, seguindo rigorosamente as diretrizes estabelecidas. A API Wallet foi construída utilizando o framework Django em Python e PostgreSQL, como solicitado, com foco na implementação de autenticação segura via JWT, aderência aos padrões RESTful e organização clara do código. Além disso, foram incluídas funcionalidades essenciais como criação de usuários, gestão de saldos de carteira e transferências entre usuários, com a opção de filtrar transações por período. O projeto buscou não apenas cumprir os requisitos básicos, mas também incorporar boas práticas de segurança, arquitetura limpa e documentação abrangente, visando a entrega de uma solução robusta e de alta qualidade.
+O objetivo deste projeto, é demonstrar proficiência em desenvolvimento backend, seguindo rigorosamente as diretrizes estabelecidas. A API Wallet foi construída utilizando o framework Django em Python e PostgreSQL, como solicitado, com foco na implementação de autenticação segura via JWT, aderência aos padrões RESTfull e organização clara do código. Além disso, foram incluídas funcionalidades essenciais como criação de usuários, gestão de saldos de carteira digitais e transferências entre usuários, com a opção de filtrar transações por período (utilizando um script para popular o banco de dados com dados fictícios). O projeto buscou não apenas cumprir os requisitos básicos, mas também incorporar boas práticas de segurança, arquitetura limpa e documentação abrangente, visando a entrega de uma solução robusta e de alta qualidade.
 
 
 #### 💻 Pré-requisitos
@@ -146,22 +146,24 @@ Este guia detalhado irá te mostrar como usar a API de Carros e Marcas, desde a 
 
  Existem três maneiras de obter um token:
 
- 1. Criar um usuário: Você pode criar um usuário diretamente pela API. 
+ 1. Criar um usuário: Você pode criar um usuário diretamente pela API (Body: form-data). 
  Endpoint: `POST /api/accounts/register`
     ```
       {
         "email": "user@example.com",
         "password": "your_password",
         "first_name": "John",
-        "last_name": "Doe"
+        "last_name": "Doe",
+        "img_profile": ""
       }
     ```
     Sucesso da resposta (201 Created)
     ```
       {
-        "email": "user@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
+        "email": "john@mail.com",
+        "first_name": "Jonh",
+        "last_name": "Doe",
+        "img_profile": "http://localhost:8000/media/users/jonh_doe.jpg"
       }
     ```
 
@@ -180,16 +182,19 @@ Endpoint: `POST /api/accounts/login`
 Sucesso da resposta (200 OK)
 ```
 {
-  "access_token": "your_jwt_token",
-  "refresh_token": "your_refresh_token",
-  "type": "Bearer",
-  "expiration_at": 1741130263,
-  "issued_at": 1741043863,
-  "jti": "e4f550ee0e1840269813f25e55c2b2e5",
-  "user": {
-    "id": 1,
-    "email": "user@example.com"
-  }
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1ODQ5MzIxLCJpYXQiOjE3NDU4NDc1MjEsImp0aSI6IjdhN2U5ZmQ2NzE1OTQ1YmZiY2VhN2E3Yjg1MzcyZjViIiwidXNlcl9pZCI6MTd9.Z5uNfU_pUdPnsp7telXUDqRwinq5sPnk8GH5gNBqYc8",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0NTkzMzkyMSwiaWF0IjoxNzQ1ODQ3NTIxLCJqdGkiOiJjYzA2YzNlMTY4ZjI0ZDNmYjU4MDUwNmNjY2U3OTM3NiIsInVzZXJfaWQiOjE3fQ.TBRhXZcDqQwag6kfB2robkWTluid1qcMit0ZxwAUe0I",
+    "type": "Bearer",
+    "expiration_at": 1745933921,
+    "issued_at": 1745847521,
+    "jti": "502b2bcac2544120a133969547364c8c",
+    "user": {
+        "id": 17,
+        "email": "john@mail.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "img_profile": "http://localhost:8000/media/users/john_doe.jpg"
+    }
 }
 ```
 
@@ -451,11 +456,11 @@ _Dica_: No Swagger, você pode simplesmente colar o access_token no campo "Autho
 
 👨🏻‍🚀 Postman
 
-Navegue até o diretório `Postman` para obter a coleção Postman, dentro do Postman no Import adicione a coleção `Wallet.postman_collection.json`. 
+Navegue até o diretório `Postman` para obter a coleção Postman, dentro do Postman no Import adicione a coleção `Project Wallet API.postman_collection.json`. Se deseja poderá usar o arquivo que gerou o `Redoc`, denominado de `Project Wallet API.yaml`
 
 Estrutura da coleção:
 ```
-Wallet
+Project Wallet API
 ├── Accounts
 │   ├── Login
 |   ├── Register

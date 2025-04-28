@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
+import os
 
 
 class CustomUserManager(BaseUserManager):
@@ -25,11 +27,21 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+def user_image(instance, filename):
+    first = slugify(instance.first_name) if instance.first_name else 'first'
+    last = slugify(instance.last_name) if instance.last_name else 'last'
+    name = f"{first}_{last}".lower()
+    ext = os.path.splitext(filename)[1]
+    filename = f"{name}{ext}"
+    return os.path.join('users', filename)
+
+
 class User(AbstractUser):
     username = None
     email = models.EmailField(_('Email'), unique=True)
     first_name = models.CharField(_('Primeiro nome'), max_length=150, blank=True, db_index=True)
     last_name = models.CharField(_('Sobrenome'), max_length=150, blank=True, db_index=True)
+    img_profile = models.ImageField(_('Imagem de perfil'), upload_to=user_image, null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
