@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Wallet, Transaction
 
 
@@ -12,10 +13,6 @@ class WalletAdmin(admin.ModelAdmin):
         return obj.user.email
     get_user_email.short_description = 'Usuário'
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        obj.refresh_from_db()
-
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
@@ -23,7 +20,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'get_sender_email',
         'get_receiver_email',
         'amount',
-        'status',
+        'colored_status',
         'timestamp'
     )
     list_filter = ('status', 'timestamp')
@@ -39,3 +36,26 @@ class TransactionAdmin(admin.ModelAdmin):
     def get_receiver_email(self, obj):
         return obj.receiver_wallet.user.email
     get_receiver_email.short_description = 'Destinatário'
+
+    def colored_status(self, obj):
+        """
+        Retorna o status com cor:
+         - failed  → vermelho
+         - pending → laranja
+         - completed → verde
+        """
+
+        color_map = {
+            'failed': 'red',
+            'pending': 'orange',
+            'completed': 'green',
+        }
+        color = color_map.get(obj.status, 'black')
+        label = obj.get_status_display()  # usa o human-readable do choice
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            label
+        )
+    colored_status.short_description = 'Status'
+    colored_status.admin_order_field = 'status'

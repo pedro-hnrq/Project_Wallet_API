@@ -1,11 +1,17 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from .models import Wallet, Transaction
-from .serializers import WalletSerializer, TransactionSerializer
-from .permissions import IsTransactionOwner
 from drf_spectacular.utils import extend_schema
 from django.db import transaction
 from decimal import Decimal
+
+from .models import Wallet, Transaction
+from .serializers import WalletSerializer, TransactionSerializer
+from .permissions import IsTransactionOwner
+from .tasks import (
+    notify_transaction_created,
+    notify_transaction_updated,
+    notify_transaction_deleted
+)
 
 
 @extend_schema(tags=['Wallets'])
@@ -114,6 +120,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         # Verificar saldo suficiente
         if sender_wallet.balance < amount:
+            fail_serializer = self.get_serializer(data=request.data)
+            fail_serializer.is_valid(raise_exception=True)
+            fail_serializer = fail_serializer.save(
+                sender_wallet=sender_wallet,
+                receiver_wallet=receiver_wallet,
+                status='failed'
+            )
+            # Retorna erro ao cliente
             return Response(
                 {'detail': 'Saldo insuficiente.'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -136,6 +150,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
             receiver_wallet.balance += amount
             receiver_wallet.save()
 
+        notify_transaction_created.apply_async((transaction_obj.id,), countdown=5)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
@@ -149,6 +165,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        updated_tx = serializer.save()
+        notify_transaction_updated.apply_async((updated_tx.id,), countdown=5)
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
@@ -159,5 +180,17 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Transação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
         if instance.sender_wallet.user != request.user and instance.receiver_wallet.user != request.user:
             return Response({'detail': 'Você não tem permissão para deletar esta transação.'}, status=status.HTTP_403_FORBIDDEN)
+
+        instance = self.get_object()
+        # guarda dados antes de deletar
+        sender_email = instance.sender_wallet.user.email
+        receiver_email = instance.receiver_wallet.user.email
+        status_tx = instance.status
+        amount_tx = instance.amount
+
         instance.delete()
+        notify_transaction_deleted.apply_async(
+            (sender_email, receiver_email, status_tx, str(amount_tx)),
+            countdown=5
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
