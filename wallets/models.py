@@ -61,7 +61,7 @@ class Transaction(models.Model):
         _('Status'),
         max_length=20,
         choices=STATUS_CHOICES,
-        default='completed'
+        default='pending'
     )
     timestamp = models.DateTimeField('Data/Hora', auto_now_add=True)
     note = models.TextField('Observação', blank=True, null=True)

@@ -108,6 +108,11 @@ Executando o Projeto
 python manage.py runserver
 ```
 
+Executando o Celery
+```python
+celery -A core worker -l info
+```
+
 Linter - Flake8
 ```python
 flake8
@@ -463,8 +468,8 @@ Estrutura da coleção:
 Project Wallet API
 ├── Accounts
 │   ├── Login
-|   ├── Register
-|   ├── Refresh
+│   ├── Register
+│   ├── Refresh
 │   └── Verify
 ├── Wallets
 │   ├── List 
@@ -490,6 +495,12 @@ Para visualizar as as tabelas no banco de dados no `PostgreSQL`, poderá usar a 
 - Nome de usuário: dev
 - Senha: Dev1234@
 
+####  Celery - RabbitMQ
+
+Para visualizar as tarefas do Celery, você pode acessar o painel do RabbitMQ em `http://localhost:15672/`.
+
+ - Username: guest
+ - Password: guest
 
 #### 🐋 DOCKER
 
@@ -527,6 +538,16 @@ Para facilitar a execução e o desenvolvimento da API REST, utilizamos o Docker
     ```
 
 6. Outros Comandos Úteis:
+    
+    Para rodar o Script:
+    ```bash
+    docker compose exec app python manage.py populate_db
+    ```
+
+    Para iniciar o Celery:
+    ```bash
+    docker compose exec app celery -A core worker -l INFO
+    ```
 
     Para iniciar novamente:
     ```bash
@@ -545,7 +566,7 @@ Para facilitar a execução e o desenvolvimento da API REST, utilizamos o Docker
 
 Melhorias
 
-Para aprimorar ainda mais o sistema, planejo implementar o Celery ou RabbitMQ para processamento assíncrono de transações, melhorando o desempenho e a escalabilidade.Além disso, implementa controle de acesso baseado em roles, onde administradores têm acesso completo a todas as informações e usuários comuns só conseguem visualizar suas próprias carteiras e transações.
+Para aprimorar ainda mais o sistema, planejo implementar o Celery ou RabbitMQ para processamento assíncrono de transações, melhorando o desempenho e a escalabilidade. Além disso, implementa controle de acesso baseado em roles, onde administradores têm acesso completo a todas as informações e usuários comuns só conseguem visualizar suas próprias carteiras e transações.
 
 
 #### 📓 Conclusão

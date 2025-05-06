@@ -17,16 +17,27 @@ class Command(BaseCommand):
             default=10,
             help='Número de usuários a serem criados'
         )
+        parser.add_argument(
+            '--transactions',
+            type=int,
+            default=50,
+            help='Número total de transações a serem criadas'
+        )
 
     def handle(self, *args, **options):
         fake = Faker('pt_BR')
 
         if User.objects.exists():
-            self.stdout.write(self.style.WARNING('O banco de dados já contém dados. Abortando...'))
+            self.stdout.write(self.style.WARNING(
+                'O banco de dados já contém dados. Abortando...'
+            ))
             return
 
+        num_users = options['users']
+        num_txs = options['transactions']
+
         with transaction.atomic():
-            # Cria superusuário
+            # 1) Cria superusuário
             admin = User.objects.create_superuser(
                 email='admin@example.com',
                 password='Dev.1234',
@@ -34,47 +45,68 @@ class Command(BaseCommand):
                 last_name='Sistema'
             )
             Wallet.objects.create(user=admin, balance=Decimal('10000.00'))
-            self.stdout.write(self.style.SUCCESS('Superusuário criado: admin@example.com (senha: Dev.1234)'))
+            self.stdout.write(self.style.SUCCESS(
+                'Superusuário criado: admin@example.com (senha: Dev.1234)'
+            ))
 
-            # Cria usuários normais
-            num_users = options['users']
+            # 2) Cria usuários normais e carteiras
+            wallets = []
             for _ in range(num_users):
-                user_data = {
-                    'email': fake.unique.email(),
-                    'password': 'senha123',
-                    'first_name': fake.first_name(),
-                    'last_name': fake.last_name()
-                }
-                user = User.objects.create_user(**user_data)
-
-                # Cria carteira com saldo aleatório
-                Wallet.objects.create(
+                user = User.objects.create_user(
+                    email=fake.unique.email(),
+                    password='senha123',
+                    first_name=fake.first_name(),
+                    last_name=fake.last_name()
+                )
+                wallet = Wallet.objects.create(
                     user=user,
                     balance=Decimal(random.uniform(1000, 10000)).quantize(Decimal('0.00'))
                 )
-                self.stdout.write(f'Usuário criado: {user.email}')
+                wallets.append(wallet)
+                self.stdout.write(f'Usuário criado: {user.email} (saldo: {wallet.balance})')
 
-            # Cria transações entre carteiras
-            wallets = list(Wallet.objects.all())
-            for _ in range(50):
+            # 3) Cria transações com status aleatório
+            STATUS_CHOICES = ['completed', 'pending', 'failed']
+            for i in range(num_txs):
                 sender, receiver = random.sample(wallets, 2)
-
-                # Garante que o valor não exceda o saldo
                 max_amount = float(sender.balance)
-                amount = Decimal(random.uniform(10.0, max_amount)).quantize(Decimal('0.00'))
+                # garantia de mínimo 0.01
+                amount = Decimal(random.uniform(0.01, max_amount or 0.01)).quantize(Decimal('0.00'))
 
-                Transaction.objects.create(
+                status = random.choices(
+                    STATUS_CHOICES,
+                    weights=[0.7, 0.2, 0.1],  # 70% concluídas, 20% pendentes, 10% falhas
+                    k=1
+                )[0]
+
+                tx = Transaction.objects.create(
                     sender_wallet=sender,
                     receiver_wallet=receiver,
                     amount=amount,
-                    status='completed',
+                    status=status,
                     note=fake.sentence()
                 )
 
-                # Atualiza saldos
-                sender.balance -= amount
-                receiver.balance += amount
-                sender.save()
-                receiver.save()
+                # Apenas para transações concluídas, atualiza saldos
+                if status == 'completed':
+                    sender.balance -= amount
+                    receiver.balance += amount
+                    sender.save()
+                    receiver.save()
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f'[{i + 1}/{num_txs}] Tx#{tx.id}:'
+                            f'{status.upper()} R${amount} de {sender.user.email} para {receiver.user.email}'
+                        )
+                    )
+                else:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f'[{i + 1}/{num_txs}] Tx#{tx.id}: {status.upper()}'
+                            f'R${amount} de {sender.user.email} para {receiver.user.email}'
+                        )
+                    )
 
-            self.stdout.write(self.style.SUCCESS(f'Banco de dados populado com {num_users} usuários e 50 transações!'))
+            self.stdout.write(self.style.SUCCESS(
+                f'Banco populado com {num_users} usuários e {num_txs} transações!'
+            ))

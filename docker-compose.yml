@@ -1,4 +1,33 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: project-wallet
+    stdin_open: true
+    tty: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    command: ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - wallet
+
+  worker:
+    build: .
+    command: celery -A core worker -l INFO
+    restart: always
+    container_name: celery-wallet
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - wallet
+
   db:
     container_name: postgres-wallet
     image: postgres:17-alpine
@@ -14,25 +43,23 @@ services:
     networks:
       - wallet
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: project-wallet
-    stdin_open: true
-    tty: true
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: rabbitmq-wallet
     ports:
-      - "8000:8000"
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     volumes:
-      - ./:/app
-    command: tail -f /dev/null
-    depends_on:
-      - db
+      - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - wallet
 
 volumes:
   pgdata:
+  rabbitmq-data:
 
 networks:
   wallet:
